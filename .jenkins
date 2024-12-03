@@ -3,7 +3,7 @@ pipeline {
     
     environment {
 	    PROJECT_NAME = "Sample Application"
-		REPO_PATH = "/var/lib/jenkins/workspace/GreenCodeSQL@2"
+		REPO_PATH = "/var/lib/jenkins/workspace/GCRTest@2"
 		PYTHON_PATH = "/usr/bin/python3"
 		PYTEST_PATH = "/usr/bin/pytest"
 		PATH = "/usr/share/maven/bin/mvn:$PATH"
@@ -14,7 +14,7 @@ pipeline {
             steps {
                 echo "Project Name: ${env.PROJECT_NAME}"
                 ws("${env.REPO_PATH}") {
-                    git branch: 'main', credentialsId: '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', url: 'https://github.com/ajadlitan/GreenCodeSQLite.git'
+                    git branch: 'main', credentialsId: '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', url: 'https://github.com/ajadlitan/GCRTest.git'
 		                sh "chmod -R 777 ${WORKSPACE}"
                 }
             }
