@@ -14,7 +14,7 @@ pipeline {
             steps {
                 echo "Project Name: ${env.PROJECT_NAME}"
                 ws("${env.REPO_PATH}") {
-                    git branch: 'main', credentialsId: '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', url: 'https://github.com/ajadlitan/GCRTest.git'
+                    git branch: 'main', credentialsId: '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', url: 'https://github.com/ajadindian/GCRTest.git'
 		                sh "chmod -R 777 ${WORKSPACE}"
                 }
             }
