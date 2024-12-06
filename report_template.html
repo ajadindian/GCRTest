@@ -66,6 +66,47 @@
             color: var(--primary);
             font-size: 1.3rem;
         }
+        .improvement-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            box-shadow: var(--shadow);
+            text-align: center;
+            animation: slideUp 0.5s forwards;
+            margin-bottom: 2rem;
+        }
+
+        .improvement-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0.5rem 0;
+        }
+
+        .improvement-value.positive {
+            color: var(--success);
+        }
+
+        .improvement-value.negative {
+            color: var(--danger);
+        }
+
+        .improvement-label {
+            font-size: 1.1rem;
+            color: var(--text);
+            opacity: 0.8;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
 
         .section {
             max-width: 1400px;
@@ -285,6 +326,14 @@
                 </div>
             </div>
         </div>
+        <div class="improvement-card">
+            <div class="improvement-label">Energy Efficiency Improvement</div>
+            {% set energy_improvement = ((total_before|float - total_after|float) / total_before|float * 100) | round(2) %}
+            <div class="improvement-value {{ 'positive' if energy_improvement > 0 else 'negative' }}">
+                {{ energy_improvement }}%
+                <i class="fas {{ 'fa-arrow-up' if energy_improvement > 0 else 'fa-arrow-down' }}"></i>
+            </div>
+        </div>
 
         <div class="graph-container">
             {{ div_bar_graph_before | safe }}
@@ -332,7 +381,22 @@
                 </div>
             </div>
         </div>
-
+        <div class="improvement-card">
+            <div class="improvement-label">Emissions Reduction</div>
+            {% if total_emissions_before|float > 0 %}   
+                {% set emissions_improvement = ((total_emissions_before|float - total_emissions_after|float) / total_emissions_before|float * 100) | round(2) %}
+                <div class="improvement-value {{ 'positive' if emissions_improvement > 0 else 'negative' }}">
+                    {{ emissions_improvement }}%
+                    <i class="fas {{ 'fa-arrow-up' if emissions_improvement > 0 else 'fa-arrow-down' }}"></i>
+                </div>
+            {% else %}
+                <div class="improvement-value">
+                    N/A
+                    <i class="fas fa-question-circle"></i>
+                </div>
+            {% endif %}
+        </div>
+        </div>
         <div class="graph-container">
             {{ div_bar_graph_before_gco2eq | safe }}
         </div>
