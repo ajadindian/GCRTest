@@ -1,0 +1,257 @@
+.running-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+}
+
+.progress-section {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.progress-container {
+    margin: 2rem 0;
+}
+
+.progress-bar {
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-fill {
+    position: absolute;
+    height: 100%;
+    background: linear-gradient(90deg, #2ecc71, #27ae60);
+    width: 0;
+    transition: width 0.3s ease;
+    border-radius: 4px;
+}
+
+.progress-status {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+    color: #666;
+    font-size: 0.9rem;
+    width: 100%;
+    overflow: hidden;
+}
+
+.progress-text {
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-right: 10px;
+    max-width: calc(100% - 50px); /* Adjust based on percentage width */
+}
+
+.progress-percentage {
+    flex-shrink: 0;
+    min-width: 40px;
+    text-align: right;
+}
+
+.stages {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin: 2rem 0;
+}
+
+.stage {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    opacity: 0.6;
+    transition: all 0.3s ease;
+}
+
+.stage.completed {
+    opacity: 1;
+}
+
+.stage-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.stage.completed .stage-icon {
+    background: #2ecc71;
+    color: white;
+}
+
+.completion-message {
+    text-align: center;
+    margin: 2rem 0;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.5s ease;
+}
+
+.completion-message.hidden {
+    display: none;
+}
+
+.completion-message:not(.hidden) {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.checkmark {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: #2ecc71;
+    color: white;
+    font-size: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    animation: scaleIn 0.5s ease;
+}
+
+.report-section {
+    margin-top: 2rem;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.5s ease;
+}
+
+.report-section.hidden {
+    display: none;
+}
+
+.report-section:not(.hidden) {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.report-content {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    position: relative;
+}
+
+.copy-button {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: white;
+    border: 1px solid #dee2e6;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    opacity: 0.6;
+}
+
+.copy-button:not(:disabled) {
+    opacity: 1;
+}
+
+.copy-button:disabled {
+    cursor: not-allowed;
+}
+
+.copy-button:hover:not(:disabled) {
+    background: #f8f9fa;
+}
+
+.copy-button.copied {
+    background: #2ecc71;
+    color: white;
+    border-color: #2ecc71;
+}
+
+.tooltip {
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    background: #333;
+    color: white;
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.copy-button:hover .tooltip {
+    opacity: 1;
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0);
+    }
+    to {
+        transform: scale(1);
+    }
+}
+
+@media (max-width: 768px) {
+    .stages {
+        grid-template-columns: 1fr;
+    }
+    
+    .running-container {
+        padding: 1rem;
+    }
+    
+    .progress-section {
+        padding: 1rem;
+    }
+}
+
+.report-content {
+    position: relative;
+    width: 100%;
+    margin-top: 10px;
+}
+.report-text {
+    max-width: 100%;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+    border: 1px solid #ddd;
+    padding: 10px;
+    background-color: #f9f9f9;
+    max-height: 200px;
+    overflow-y: auto;
+    font-size: 0.9em;
+    line-height: 1.4;
+}
+.timer-container {
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+.timer-countdown {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #2c3e50;
+    margin: 10px 0;
+}

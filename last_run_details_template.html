@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detailed Emissions Report</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        :root {
+            --primary: #2ecc71;
+            --primary-dark: #27ae60;
+            --secondary: #3498db;
+            --text: #2c3e50;
+            --background: #f8fafb;
+            --card-bg: #ffffff;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --shadow: 0 8px 30px rgba(0,0,0,0.12);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+            clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            opacity: 0;
+            animation: slideDown 0.5s forwards;
+        }
+
+        .navigation {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            text-align: right;
+            opacity: 0;
+            animation: fadeIn 0.5s forwards 0.3s;
+        }
+
+        .navigation a {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            color: var(--primary);
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: var(--transition);
+        }
+
+        .navigation a:hover {
+            background: rgba(46, 204, 113, 0.1);
+        }
+
+        .content {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            opacity: 0;
+            animation: fadeIn 0.5s forwards 0.5s;
+        }
+
+        .dropdown-container {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+
+        .dropdown-container label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        select {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            color: var(--text);
+            background-color: white;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        select:hover, select:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+
+        .tables-container {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: nowrap; /* Prevents wrapping to next line */
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .table-box {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            opacity: 0;
+            transform: translateY(20px);
+            overflow: auto; /* Adds scroll if content overflows vertically */
+        }
+
+        .table-box.show {
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .table-box h2 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .table-box h2 i {
+            color: var(--primary);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        table th {
+            background: rgba(46, 204, 113, 0.1);
+            color: var(--text);
+            font-weight: 600;
+            text-align: left;
+            padding: 1rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+
+        table td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+
+        table tr:last-child td {
+            border-bottom: none;
+        }
+
+        table tbody tr {
+            transition: var(--transition);
+        }
+
+        table tbody tr:hover {
+            background: rgba(46, 204, 113, 0.05);
+        }
+
+        .no-data-message {
+            text-align: center;
+            padding: 3rem;
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            color: #666;
+            font-size: 1.1rem;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: var(--transition);
+        }
+
+        .no-data-message.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Responsive table for smaller screens */
+        @media (max-width: 768px) {
+            .tables-container {
+                overflow-x: auto;
+            }
+            
+            table {
+                min-width: 600px; /* Adjust based on your content */
+            }
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                padding: 0 1rem;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .table-box {
+                padding: 1rem;
+            }
+
+            table {
+                display: block;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Solution Based Detailed Emissions Report</h1>
+    </div>
+    
+    <div class="navigation">
+        <a href="emissions_report.html">
+            <i class="fas fa-arrow-left"></i>
+            Back to Main Report
+        </a>
+    </div>
+    
+    <div class="content">
+        <div class="dropdown-container">
+            <label for="solutionDirSelect">
+                <i class="fas fa-folder-open"></i>
+                Select Solution Directory
+            </label>
+            <select id="solutionDirSelect">
+                <option value="" disabled selected>-- Select Directory --</option>
+                {% for dir in solution_dirs %}
+                    <option value="{{ dir }}">{{ dir }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="tables-container">
+            <div class="table-box" id="beforeTableBox" style="display: none;">
+                <h2>
+                    <i class="fas fa-history"></i>
+                    Before Refinement
+                </h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Application Name</th>
+                            <th>File Type</th>
+                            <th>Duration (s)</th>
+                            <th>Emissions (gCO2eq)</th>
+                            <th>Energy Consumed (Wh)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in latest_before_details %}
+                            <tr>
+                                <td>{{ row['application_name'] }}</td>
+                                <td>{{ row['file_type'] }}</td>
+                                <td>{{ row['duration'] }}</td>
+                                <td>{{ row['emissions_gco2eq'] }}</td>
+                                <td>{{ row['energy_consumed_wh'] }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="table-box" id="afterTableBox" style="display: none;">
+                <h2>
+                    <i class="fas fa-check-circle"></i>
+                    After Refinement
+                </h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Application Name</th>
+                            <th>File Type</th>
+                            <th>Duration (s)</th>
+                            <th>Emissions (gCO2eq)</th>
+                            <th>Energy Consumed (Wh)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in latest_after_details %}
+                            <tr>
+                                <td>{{ row['application_name'] }}</td>
+                                <td>{{ row['file_type'] }}</td>
+                                <td>{{ row['duration'] }}</td>
+                                <td>{{ row['emissions_gco2eq'] }}</td>
+                                <td>{{ row['energy_consumed_wh'] }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="no-data-message" id="noDataMessage" style="display: none;">
+            <i class="fas fa-info-circle"></i>
+            <p>No data available for the selected Solution Directory.</p>
+        </div>
+    </div>
+    
+    <script type="text/template" id="beforeData">
+        {{ latest_before_details | tojson }}
+    </script>
+    <script type="text/template" id="afterData">
+        {{ latest_after_details | tojson }}
+    </script>
+    <script>
+        $(document).ready(function(){
+            function escapeHtml(text) {
+                const map = {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                };
+                return text.toString().replace(/[&<>"']/g, m => map[m]);
+            }
+
+            $('#solutionDirSelect').on('change', function(){
+                const selectedDir = $(this).val();
+                
+                // Reset display
+                $('#beforeTableBox, #afterTableBox').hide().removeClass('show');
+                $('#noDataMessage').hide().removeClass('show');
+                
+                if(selectedDir){
+                    const beforeData = JSON.parse(document.getElementById('beforeData').textContent);
+                    const afterData = JSON.parse(document.getElementById('afterData').textContent);
+                    
+                    const filteredBefore = beforeData.filter(item => item['solution_dir'] === selectedDir);
+                    const filteredAfter = afterData.filter(item => item['solution_dir'] === selectedDir);
+                    
+                    if(filteredBefore.length > 0 || filteredAfter.length > 0){
+                        if(filteredBefore.length > 0){
+                            const beforeTableBody = filteredBefore.map(row => `
+                                <tr>
+                                    <td>${escapeHtml(row['application_name'])}</td>
+                                    <td>${escapeHtml(row['file_type'])}</td>
+                                    <td>${escapeHtml(row['duration'])}</td>
+                                    <td>${escapeHtml(row['emissions_gco2eq'])}</td>
+                                    <td>${escapeHtml(row['energy_consumed_wh'])}</td>
+                                </tr>
+                            `).join('');
+                            
+                            $('#beforeTableBox tbody').html(beforeTableBody);
+                            $('#beforeTableBox').show().addClass('show');
+                        }
+                        
+                        if(filteredAfter.length > 0){
+                            const afterTableBody = filteredAfter.map(row => `
+                                <tr>
+                                    <td>${escapeHtml(row['application_name'])}</td>
+                                    <td>${escapeHtml(row['file_type'])}</td>
+                                    <td>${escapeHtml(row['duration'])}</td>
+                                    <td>${escapeHtml(row['emissions_gco2eq'])}</td>
+                                    <td>${escapeHtml(row['energy_consumed_wh'])}</td>
+                                </tr>
+                            `).join('');
+                            
+                            $('#afterTableBox tbody').html(afterTableBody);
+                            $('#afterTableBox').show().addClass('show');
+                        }
+                    } else {
+                        $('#noDataMessage').show().addClass('show');
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

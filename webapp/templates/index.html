@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Green CodeRefiner Configuration</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Tech Mahindra Logo">
+        <div class="header-titles">
+            <h1 class="green">Green</h1>
+            <h1 class="coderefiner">CodeRefiner<sup style="font-size:10px; color:#2c3e50">TM</sup></h1>
+        </div>    
+    </header>
+
+    <div class="container">
+        <div class="text-content">
+            <h1 class="main">Transform code, track, and minimize the carbon emissions of your software </h1>
+            <h3 class="main"> Green CodeRefiner<sup style="font-size:10px; color:#2c3e50">TM</sup> helps developers transform low-carbon, energy-efficient codebases by leveraging Azure OpenAI's GPT-4o model, driving sustainable software engineering practices </h3>
+            <div class="button-container">
+                <a href="/configure" class="start-button">Start Free Trial</a>
+            </div>
+        </div>
+        <div class="container-image">
+            <img src="{{ url_for('static', filename='index-image.jpg') }}" alt="Green CodeRefiner">
+        </div>   
+    </div>
+
+        <!-- Info Section -->
+        <section class="info-section">
+            <div class="info-content">
+                <h2>What is Green CodeRefiner?</h2>
+                <p class="info-description">
+                    Green CodeRefiner<sup style="font-size:10px; color:#2c3e50">TM</sup> is an innovative Azure-based utility designed to optimize your codebase for energy efficiency while tracking emissions in real-time. Utilizing the power of Azure OpenAI's GPT-4o mini model, Green CodeRefiner offers intelligent code refinement and automated unit test generation, ensuring both code quality and sustainability. Whether you are developing in Python, Java, C++, or C#, Green CodeRefiner helps reduce the environmental impact of your development activities, provides detailed emissions reports, and enhances code efficiency across large, complex projects.
+                </p>
+                <div class="info-grid">
+                    <div class="benefit-card">
+                        <h4>Green IT Adoption</h4>
+                        <p>Strengthened adoption of Green IT practices</p>
+                    </div>
+                    <div class="benefit-card">
+                        <h4>Seamless Integration</h4>
+                        <p>Seamless integration with existing GitHub and DevOps workflows</p>
+                    </div>
+                    <div class="benefit-card">
+                        <h4>Energy Efficiency</h4>
+                        <p>Improved energy efficiency of application source code</p>
+                    </div>
+                    <div class="benefit-card">
+                        <h4>Impact Score</h4>
+                        <p>20 - 40% Improved green impact score ↑</p>
+                    </div>
+                    <div class="benefit-card">
+                        <h4>Emissions Reduction</h4>
+                        <p>Reduced Scope 2 GHG emissions ↓</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    
+        <!-- Pricing Section -->
+        <section class="pricing-section">
+            <div class="pricing-content">
+                <h2>Pricing</h2>
+                <p class="pricing-subtitle">From researchers to large companies, we have plans for everyone</p>
+                
+                <div class="pricing-grid">
+                    <div class="pricing-card">
+                        <div class="pricing-header">
+                            <h3>Trial Plan</h3>
+                            <div class="price">Free</div>
+                        </div>
+                        <div class="pricing-features">
+                            <ul>
+                                <li><i class="fas fa-check"></i> Code Optimization: Refine 2-4 files</li>
+                                <li><i class="fas fa-check"></i> Basic emissions monitoring</li>
+                                <li><i class="fas fa-check"></i> Before/after code refinement tracking</li>
+                                <li><i class="fas fa-check"></i> Limited emissions report</li>
+                                <li class="not-included"><i class="fas fa-times"></i> Unit Test Generation</li>
+                            </ul>
+                        </div>
+                        <div class="pricing-footer">
+                            <a href="/configure" class="pricing-button">Start Free Trial</a>
+                        </div>
+                    </div>
+    
+                    <div class="pricing-card featured">
+                        <div class="pricing-header">
+                            <h3>Pro Plan</h3>
+                            <div class="price">Contact Us</div>
+                        </div>
+                        <div class="pricing-features">
+                            <ul>
+                                <li><i class="fas fa-check"></i> Unlimited file optimization</li>
+                                <li><i class="fas fa-check"></i> Support for 20+ languages</li>
+                                <li><i class="fas fa-check"></i> Comprehensive emissions tracking</li>
+                                <li><i class="fas fa-check"></i> Full unit test generation</li>
+                                <li><i class="fas fa-check"></i> Advanced dynamic reports</li>
+                                <li><i class="fas fa-check"></i> Priority email support</li>
+                            </ul>
+                        </div>
+                        <div class="pricing-footer">
+                            <a href="#contact" class="pricing-button featured">Contact Sales</a>
+                        </div>
+                    </div>
+    
+                    <div class="pricing-card">
+                        <div class="pricing-header">
+                            <h3>Enterprise</h3>
+                            <div class="price">Custom</div>
+                        </div>
+                        <div class="pricing-features">
+                            <ul>
+                                <li><i class="fas fa-check"></i> All Pro Plan features</li>
+                                <li><i class="fas fa-check"></i> Custom deployment options</li>
+                                <li><i class="fas fa-check"></i> CI/CD pipeline integration</li>
+                                <li><i class="fas fa-check"></i> Dedicated consulting</li>
+                                <li><i class="fas fa-check"></i> Technical team support</li>
+                            </ul>
+                        </div>
+                        <div class="pricing-footer">
+                            <a href="#contact" class="pricing-button">Contact Sales</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+</body>
+</html>

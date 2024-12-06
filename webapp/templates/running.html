@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Green CodeRefiner - Running</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='running.css') }}">
+</head>
+<body>
+    <header>
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Tech Mahindra Logo">
+        <div class="header-titles">
+            <h1 class="green">Green</h1>
+            <h1 class="coderefiner">CodeRefiner<sup style="font-size:10px; color:#2c3e50">TM</sup></h1>
+        </div>
+    </header>
+
+    <div class="running-container">
+        <div class="progress-section">
+            <h2>Processing Your Code</h2>
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill"></div>
+                </div>
+                <div class="progress-status">
+                    <span id="status" class="progress-text">Initializing...</span>
+                    <span class="progress-percentage">0%</span>
+                </div>
+            </div>
+            
+            <div class="stages">
+                <div id="step1" class="stage" data-stage="1">
+                    <div class="stage-icon">1</div>
+                    <div class="stage-text">Server Emissions Analysis</div>
+                </div>
+                <div id="step2" class="stage" data-stage="2">
+                    <div class="stage-icon">2</div>
+                    <div class="stage-text">Azure Marketplace Analysis</div>
+                </div>
+                <div id="step3" class="stage" data-stage="3">
+                    <div class="stage-icon">3</div>
+                    <div class="stage-text">Emissions Tracking</div>
+                </div>
+            </div>
+
+            <!-- New Timer Container (to be shown before completion message) -->
+            <div id="timerContainer" class="timer-container hidden">
+                <h3>Generating Detailed Report</h3>
+                <div id="timerCountdown" class="timer-countdown">30</div>
+                <p>Please wait while we prepare your comprehensive report.</p>
+            </div>
+
+            <div class="completion-message hidden">
+                <div class="checkmark">✓</div>
+                <h3>Process Complete!</h3>
+                <p>Your code has been successfully analyzed and optimized.</p>
+            </div>
+
+            <div class="report-section hidden">
+                <h3>Report Summary</h3>
+                <div class="report-content">
+                    <pre id="reportText" class="report-text">{{ report_url }}</pre>
+                    <button id="copyButton" class="copy-button" disabled>
+                        <span class="copy-icon">📋</span>
+                        <span class="button-text">Copy Report</span>
+                        <span class="tooltip">Processing in progress...</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentProgress = 0;
+        const progressFill = document.querySelector('.progress-fill');
+        const progressPercentage = document.querySelector('.progress-percentage');
+        const timerOverlay = document.getElementById('timerOverlay');
+        const timerCountdown = document.getElementById('timerCountdown');
+        
+        function updateProgress(stage) {
+            let progress;
+            switch(stage) {
+                case 1:
+                    progress = 33;
+                    break;
+                case 2:
+                    progress = 66;
+                    break;
+                case 3:
+                    progress = 100;
+                    break;
+                default:
+                    progress = 0;
+            }
+            
+            progressFill.style.width = `${progress}%`;
+            progressPercentage.textContent = `${progress}%`;
+            
+            if (progress === 100) {
+                showCompletion();
+            }
+        }
+
+        function startReportTimer() {
+            const timerContainer = document.getElementById('timerContainer');
+            timerContainer.classList.remove('hidden');
+            
+            let timeLeft = 30;
+            const timerCountdown = document.getElementById('timerCountdown');
+            
+            const timerInterval = setInterval(() => {
+                timeLeft--;
+                timerCountdown.textContent = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    timerContainer.classList.add('hidden');
+                    document.querySelector('.report-section').classList.remove('hidden');
+                }
+            }, 1000);
+        }
+
+        function showCompletion() {
+            document.querySelector('.completion-message').classList.remove('hidden');
+            
+            const copyButton = document.getElementById('copyButton');
+            copyButton.disabled = false;
+            copyButton.querySelector('.tooltip').textContent = 'Click to copy report';
+
+            startReportTimer();
+        }
+
+        // Initialize EventSource for streaming updates
+        const eventSource = new EventSource('/stream');
+        let lastProcessedStage = 0;
+
+        eventSource.onmessage = function(event) {
+            const log = event.data;
+            document.getElementById('status').textContent = log;
+
+            // Update progress based on the streaming data
+            if (log.includes("Running server_emissions.py...") && lastProcessedStage < 1) {
+                document.getElementById("step1").classList.add("completed");
+                updateProgress(1);
+                lastProcessedStage = 1;
+            } else if (log.includes("server_emissions.py completed successfully.") && lastProcessedStage < 1) {
+                document.getElementById("step1").classList.add("completed");
+                updateProgress(1);
+                lastProcessedStage = 1;
+            }
+            if(log.includes("Running AzureMarketplace.py...") && lastProcessedStage < 2) {
+                document.getElementById("step2").classList.add("completed");
+                updateProgress(2);
+                lastProcessedStage = 2;
+            } else if (log.includes("AzureMarketplace.py completed successfully.") && lastProcessedStage < 2) {
+                document.getElementById("step2").classList.add("completed");
+                updateProgress(2);
+                lastProcessedStage = 2;
+            }
+            if(log.includes("Running track_emissions.py...") && lastProcessedStage < 3) {
+                document.getElementById("step3").classList.add("completed");
+                updateProgress(3);
+                lastProcessedStage = 3;
+            } else if (log.includes("track_emissions.py completed successfully.") && lastProcessedStage < 3) {
+                document.getElementById("step3").classList.add("completed");
+                updateProgress(3);
+                lastProcessedStage = 3;
+            }
+        };
+
+        eventSource.onerror = function(error) {
+            console.error('EventSource failed:', error);
+            eventSource.close();
+            // Optional: Implement reconnection logic
+        };
+
+        // Copy functionality
+        document.getElementById('copyButton').addEventListener('click', async () => {
+            const reportText = document.getElementById('reportText').textContent;
+            try {
+                await navigator.clipboard.writeText(reportText);
+                const button = document.getElementById('copyButton');
+                button.classList.add('copied');
+                button.querySelector('.button-text').textContent = 'Copied!';
+                setTimeout(() => {
+                    button.classList.remove('copied');
+                    button.querySelector('.button-text').textContent = 'Copy Report';
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy text:', err);
+            }
+        });
+    </script>
+</body>
+</html>
