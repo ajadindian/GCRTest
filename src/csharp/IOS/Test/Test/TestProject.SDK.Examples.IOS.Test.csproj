@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+	  <PackageReference Include="TestProject.SDK" Version="0.63.1" Publish="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="TestProject.Addons.Proxy.CiOSExampleAddon">
+      <HintPath>Proxy\AddonProxy.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
