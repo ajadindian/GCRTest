@@ -5,15 +5,6 @@ import logging
 import time
 import requests
 from dotenv import load_dotenv
-import sys
-
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s: %(message)s',
-    handlers=[
-        logging.StreamHandler(sys.stdout)  # Stream to stdout
-    ]
-)
 
 def get_env_variable(var_name, is_required=True):
     value = os.getenv(var_name)
@@ -48,16 +39,8 @@ def check_azure_subscription(api_key, azure_endpoint, api_version):
         return False
 
 def handle_remove_error(func, path, exc_info):
-    """
-    Custom error handler for shutil.rmtree.
-    Logs the error and continues with the removal process.
-    """
-    if func in (os.unlink, os.remove):
-        logging.warning(f"Failed to remove file '{path}': {exc_info[1]}")
-    elif func in (os.rmdir, os.removedirs):
-        logging.warning(f"Failed to remove directory '{path}': {exc_info[1]}")
-    else:
-        logging.error(f"Unexpected error while removing '{path}': {exc_info[1]}")
+    """Custom error handler for shutil.rmtree."""
+    logging.error(f"Error removing {path}: {exc_info[1]}")
 
 def remove_directory(directory):
     """Remove a directory and handle errors."""
@@ -69,6 +52,28 @@ def remove_directory(directory):
             logging.error(f"An unexpected error occurred while removing directory '{directory}': {e}")
     else:
         logging.warning(f"Directory '{directory}' does not exist, skipping deletion.")
+
+def _handle_remove_error(func, path, exc_info):
+    """
+    Custom error handler for shutil.rmtree.
+    Logs the error and continues with the removal process.
+    """
+    if func in (os.unlink, os.remove):
+        logging.warning(f"Failed to remove file '{path}': {exc_info[1]}")
+    elif func in (os.rmdir, os.removedirs):
+        logging.warning(f"Failed to remove directory '{path}': {exc_info[1]}")
+    else:
+        logging.error(f"Unexpected error while removing '{path}': {exc_info[1]}")
+
+# def remove_directory(directory):
+#     if os.path.exists(directory):
+#         shutil.rmtree(directory)
+#         logging.info(f"Directory '{directory}' deleted successfully!")
+
+# def ensure_directory_structure(path):
+#     if not os.path.exists(path):
+#         os.makedirs(path)
+#         logging.info(f"Folder '{path}' created.")
 
 def ensure_directory_structure(path):
     """Ensure that the directory structure exists."""
