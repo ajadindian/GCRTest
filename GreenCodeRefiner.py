@@ -9,20 +9,11 @@ import requests
 from dotenv import load_dotenv
 from openai import AzureOpenAI
 import ast
-import sys
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s: %(message)s',
-    handlers=[
-        logging.StreamHandler(sys.stdout)  # Stream to stdout
-    ]
-)
-# Define Base Directory
-BASE_DIR = '/app/project'
-
+# Setup logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 # Load environment variables
-env_path = '/app/.env'
+env_path = os.path.abspath(".env")
 load_dotenv(dotenv_path=env_path, verbose=True, override=True)
 
 # Import functions from refiner_functions.py
@@ -65,7 +56,7 @@ except EnvironmentError as e:
     raise
 
 # Define directories based on BASE_DIR
-source_directory = BASE_DIR
+source_directory = os.path.dirname(env_path)
 green_code_directory = os.path.join(source_directory, 'GreenCode')
 temp_directory = os.path.join(green_code_directory, 'temp')
 test_file_directory = os.path.join(source_directory, 'TestCases')
@@ -119,11 +110,11 @@ while file_list:
     file_name = os.path.basename(file_path)
     # Skip excluded files and the green_code_directory and its subdirectories
     if file_name in EXCLUDED_FILES or relative_path.startswith(os.path.relpath(green_code_directory, source_directory)):
-        logging.info(f"Skipping excluded file or directory: {relative_path}")
+        print(f"Skipping excluded file or directory: {relative_path}")
         continue
     # Check if the file is empty
     if os.path.getsize(file_path) == 0:
-        logging.info(f"Skipping empty file: {file_path}")
+        print(f"Skipping empty file: {file_path}")
         continue
     with open(file_path, "rb") as file:
         uploaded_file = client.files.create(file=file, purpose='assistants')
@@ -135,9 +126,9 @@ while file_list:
         refined_success = apply_green_prompts(client, assistant, uploaded_file.id, prompt, refined_temp_file_path)
         # If the file is refined successfully with the current prompt, continue with the next prompt
         if refined_success:
-            logging.info(f"Successfully applied prompt: '{prompt}' to {file_name}")
+            print(f"Successfully applied prompt: '{prompt}' to {file_name}")
         else:
-            logging.info(f"Failed to apply prompt: '{prompt}' to {file_name}")
+            print(f"Failed to apply prompt: '{prompt}' to {file_name}")
 
     # Move the file after all prompts have been applied, regardless of success
     final_file_path = os.path.join(green_code_directory, relative_path)
