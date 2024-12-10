@@ -282,6 +282,37 @@
                 font-size: 2rem;
             }
         }
+        .energy-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 1rem;
+            font-family: Arial, sans-serif;
+        }
+
+        .energy-table th, .energy-table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .energy-table th {
+            background-color: #004d40;
+            color: white;
+            font-weight: bold;
+        }
+
+        .energy-table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        .energy-table tr:hover {
+            background-color: #e0f7fa;
+        }
+
+        .table-wrapper {
+            overflow-x: auto; /* Ensures the table is scrollable on small screens */
+        }
     </style>
 </head>
 <body>
@@ -344,7 +375,9 @@
 
         <div class="table-wrapper">
             <h3>Most Energy Consumption (Wh)</h3>
-            {{ energy_table_html | safe }}
+            <table class="energy-table">
+                {{ energy_table_html | safe }}
+            </table>
         </div>
     </section>
 
@@ -383,19 +416,20 @@
         </div>
         <div class="improvement-card">
             <div class="improvement-label">Emissions Reduction</div>
-            {% if total_emissions_before|float > 0 %}   
+            {% set emissions_improvement = 0 %}
+            {% if total_emissions_before|float > 0 %}
                 {% set emissions_improvement = ((total_emissions_before|float - total_emissions_after|float) / total_emissions_before|float * 100) | round(2) %}
-                <div class="improvement-value {{ 'positive' if emissions_improvement > 0 else 'negative' }}">
-                    {{ emissions_improvement }}%
-                    <i class="fas {{ 'fa-arrow-up' if emissions_improvement > 0 else 'fa-arrow-down' }}"></i>
-                </div>
-            {% else %}
-                <div class="improvement-value">
-                    N/A
-                    <i class="fas fa-question-circle"></i>
-                </div>
             {% endif %}
-        </div>
+            <div class="improvement-value {{ 'positive' if emissions_improvement > 0 else 'negative' if emissions_improvement < 0 else 'neutral' }}">
+                {{ emissions_improvement }}%
+                {% if emissions_improvement > 0 %}
+                    <i class="fas fa-arrow-up"></i>
+                {% elif emissions_improvement < 0 %}
+                    <i class="fas fa-arrow-down"></i>
+                {% else %}
+                    <i class="fas fa-minus"></i>
+                {% endif %}
+            </div>
         </div>
         <div class="graph-container">
             {{ div_bar_graph_before_gco2eq | safe }}
@@ -406,7 +440,9 @@
 
         <div class="table-wrapper">
             <h3>Most Emissions (gCO2eq)</h3>
-            {{ emissions_table_html | safe }}
+            <table class="energy-table">
+                {{ emissions_table_html | safe }}
+            </table>
         </div>
     </section>
 
