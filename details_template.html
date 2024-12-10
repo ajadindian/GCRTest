@@ -258,7 +258,7 @@
                 overflow-x: auto;
                 -webkit-overflow-scrolling: touch;
             }
-        }
+        }        
     </style>
 </head>
 <body>
@@ -306,11 +306,11 @@
                     <tbody>
                         {% for row in before_details %}
                             <tr>
-                                <td>{{ row['application_name'] }}</td>
-                                <td>{{ row['file_type'] }}</td>
-                                <td>{{ row['duration'] }}</td>
-                                <td>{{ row['emissions_gco2eq'] }}</td>
-                                <td>{{ row['energy_consumed_wh'] }}</td>
+                                <td>{{ row['Application name'] }}</td>
+                                <td>{{ row['File Type'] }}</td>
+                                <td>{{ row['Duration'] }}</td>
+                                <td>{{ row['Emissions (gCO2eq)'] }}</td>
+                                <td>{{ row['Energy Consumed (Wh)'] }}</td>
                             </tr>
                         {% endfor %}
                     </tbody>
@@ -335,11 +335,11 @@
                     <tbody>
                         {% for row in after_details %}
                             <tr>
-                                <td>{{ row['application_name'] }}</td>
-                                <td>{{ row['file_type'] }}</td>
-                                <td>{{ row['duration'] }}</td>
-                                <td>{{ row['emissions_gco2eq'] }}</td>
-                                <td>{{ row['energy_consumed_wh'] }}</td>
+                                <td>{{ row['Application name'] }}</td>
+                                <td>{{ row['File Type'] }}</td>
+                                <td>{{ row['Duration'] }}</td>
+                                <td>{{ row['Emissions (gCO2eq)'] }}</td>
+                                <td>{{ row['Energy Consumed (Wh)'] }}</td>
                             </tr>
                         {% endfor %}
                     </tbody>
@@ -383,18 +383,18 @@
                     const beforeData = JSON.parse(document.getElementById('beforeData').textContent);
                     const afterData = JSON.parse(document.getElementById('afterData').textContent);
                     
-                    const filteredBefore = beforeData.filter(item => item['solution_dir'] === selectedDir);
-                    const filteredAfter = afterData.filter(item => item['solution_dir'] === selectedDir);
+                    const filteredBefore = beforeData.filter(item => item['solution dir'] === selectedDir);
+                    const filteredAfter = afterData.filter(item => item['solution dir'] === selectedDir);
                     
                     if(filteredBefore.length > 0 || filteredAfter.length > 0){
                         if(filteredBefore.length > 0){
                             const beforeTableBody = filteredBefore.map(row => `
                                 <tr>
-                                    <td>${escapeHtml(row['application_name'])}</td>
-                                    <td>${escapeHtml(row['file_type'])}</td>
-                                    <td>${escapeHtml(row['duration'])}</td>
-                                    <td>${escapeHtml(row['emissions_gco2eq'])}</td>
-                                    <td>${escapeHtml(row['energy_consumed_wh'])}</td>
+                                    <td>${escapeHtml(row['Application name'])}</td>
+                                    <td>${escapeHtml(row['File Type'])}</td>
+                                    <td>${escapeHtml(row['Duration'])}</td>
+                                    <td>${escapeHtml(row['Emissions (gCO2eq)'])}</td>
+                                    <td>${escapeHtml(row['Energy Consumed (Wh)'])}</td>
                                 </tr>
                             `).join('');
                             
@@ -405,11 +405,11 @@
                         if(filteredAfter.length > 0){
                             const afterTableBody = filteredAfter.map(row => `
                                 <tr>
-                                    <td>${escapeHtml(row['application_name'])}</td>
-                                    <td>${escapeHtml(row['file_type'])}</td>
-                                    <td>${escapeHtml(row['duration'])}</td>
-                                    <td>${escapeHtml(row['emissions_gco2eq'])}</td>
-                                    <td>${escapeHtml(row['energy_consumed_wh'])}</td>
+                                    <td>${escapeHtml(row['Application name'])}</td>
+                                    <td>${escapeHtml(row['File Type'])}</td>
+                                    <td>${escapeHtml(row['Duration'])}</td>
+                                    <td>${escapeHtml(row['Emissions (gCO2eq)'])}</td>
+                                    <td>${escapeHtml(row['Energy Consumed (Wh)'])}</td>
                                 </tr>
                             `).join('');
                             
