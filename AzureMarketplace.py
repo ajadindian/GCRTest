@@ -11,18 +11,10 @@ from openai import AzureOpenAI
 import ast
 import sys
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s: %(message)s',
-    handlers=[
-        logging.StreamHandler(sys.stdout)  # Stream to stdout
-    ]
-)
-# Define Base Directory
-BASE_DIR = '/app/project'
-
+# Setup logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 # Load environment variables
-env_path = '/app/.env'
+env_path = os.path.abspath(".env")
 load_dotenv(dotenv_path=env_path, verbose=True, override=True)
 
 # Import functions from RefinerFunction.py
@@ -65,7 +57,7 @@ except EnvironmentError as e:
     raise
 
 # Define directories based on BASE_DIR
-source_directory = BASE_DIR
+source_directory = os.path.dirname(env_path)
 green_code_directory = os.path.join(source_directory, 'GreenCode')
 temp_directory = os.path.join(green_code_directory, 'temp')
 test_file_directory = os.path.join(source_directory, 'TestCases')
@@ -182,4 +174,4 @@ for file_path in file_list:
         break
 
 # Print the final message after processing
-logging.info("Thank you for using the Green CodeRefiner Azure Marketplace Trial version. To expand the usage, subscribe to Azure Marketplace. You can check the output into the 'GreenCode' directory.")
+print("Thank you for using the Green CodeRefiner Azure Marketplace Trial version. To expand the usage, subscribe to Azure Marketplace. You can check the output into the 'GreenCode' directory.")
