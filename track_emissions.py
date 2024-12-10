@@ -15,26 +15,13 @@ import plotly.io as pio
 import plotly.express as px
 import plotly.graph_objs as go
 import logging
-import sys
-
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s: %(message)s',
-    handlers=[
-        logging.StreamHandler(sys.stdout)  # Stream to stdout
-    ]
-)
+import sqlite3
 
 # Load environment variables
-# Define Base Directory
-BASE_DIR = '/app/project'
-TEMP_DIR = '/app/'
-# Load environment variables
-env_path = os.path.join(BASE_DIR, ".env")
+env_path = os.path.abspath(".env")
 load_dotenv(dotenv_path=env_path, verbose=True, override=True)
+SOURCE_DIRECTORY = os.path.dirname(env_path)
 
-# Define directories based on BASE_DIR
-SOURCE_DIRECTORY = BASE_DIR
 GREEN_REFINED_DIRECTORY = os.path.join(SOURCE_DIRECTORY, 'GreenCode')
 RESULT_DIR = os.path.join(SOURCE_DIRECTORY, 'Result')
 REPORT_DIR = os.path.join(SOURCE_DIRECTORY, 'Report')
@@ -43,125 +30,83 @@ REPORT_DIR = os.path.join(SOURCE_DIRECTORY, 'Report')
 EXCLUDED_FILES = [file.strip() for file in os.getenv('EXCLUDED_FILES', '').split(',') if file.strip()]
 EXCLUDED_DIRECTORIES = [file.strip() for file in os.getenv('EXCLUDED_DIRECTORIES', '').split(',') if file.strip()]
 
-# Constants for CO2 Emission Calculations
-GLOBAL_GRID_CO2_FACTOR = 0.5  # kg CO2 per kWh
-US_GRID_CO2_FACTOR = 0.4  # kg CO2 per kWh
-GLOBAL_RENEWABLE_CO2_FACTOR = 0.1  # kg CO2 per kWh
-MILLI_WATTS_TO_KILOWATTS = 1000
-
-# Load CO2 emission factors from .env with defaults
-GLOBAL_GRID_CO2_FACTOR = float(os.getenv('GLOBAL_GRID_CO2_FACTOR', 0.54))
-US_GRID_CO2_FACTOR = float(os.getenv('US_GRID_CO2_FACTOR', 0.46))
-GLOBAL_RENEWABLE_CO2_FACTOR = float(os.getenv('GLOBAL_RENEWABLE_CO2_FACTOR', 0.01))
-
 def process_emissions_for_file(tracker, script_path, emissions_csv, file_type, result_dir, test_command):
-    # Inline CO2 Emission Calculation Function
-    def calculate_co2_emission(emissions_data):
-        try:
-            co2_emission_factors = {
-                'grid': {
-                    'global': GLOBAL_GRID_CO2_FACTOR,
-                    'us': US_GRID_CO2_FACTOR,
-                },
-                'renewable': {
-                    'global': GLOBAL_RENEWABLE_CO2_FACTOR,
-                },
-            }
-            
-            energy_source = os.getenv('ENERGY_SOURCE', 'grid')  # 'grid' or 'renewable'
-            location = os.getenv('LOCATION', 'global')  # 'global' or 'us'
-
-            co2_emission_per_kwh = co2_emission_factors.get(energy_source, {}).get(location, GLOBAL_GRID_CO2_FACTOR)
-            
-            # Use energy_consumed directly from emissions_data
-            energy_consumption = emissions_data['energy_consumed'] * 1000  # Convert to mWh
-            co2_emission = (energy_consumption / MILLI_WATTS_TO_KILOWATTS) * co2_emission_per_kwh
-
-            return co2_emission
-        except Exception as e:
-            logging.error(f"Error calculating CO2 emission: {e}")
-            return None
-
+    # If no test command (not a test file), return immediately
+    if not test_command:
+        return
+   
     emissions_data = None
     duration = 0
     test_output = 'Unknown'
     script_name = os.path.basename(script_path)
+
+    # Extract 'solution dir' (immediate parent directory)
     solution_dir = os.path.basename(os.path.dirname(script_path))
-    
+    is_green_refined = os.path.commonpath([script_path, GREEN_REFINED_DIRECTORY]) == GREEN_REFINED_DIRECTORY
+
+    tracker_started = False
     try:
-        # Disable logging for CodeCarbon
-        logging.getLogger("codecarbon").disabled = True
-        tracker.start()  # Start the emissions tracking
+        # Start the emissions tracking ONLY for test files
+        tracker.start()
+        tracker_started = True
+
         start_time = time.time()
-        
-        # Run the test command
-        if test_command:
+        try:
+            # Run test command for test files
             test_result = subprocess.run(test_command, capture_output=True, text=True, timeout=20)
             duration = time.time() - start_time
             test_output = 'Pass' if test_result.returncode == 0 else 'Fail'
-        else:
-            # No test command, skip test execution
-            test_output = 'Not a test file'
-            logging.info(f"Skipping test execution for {script_name} as it is a normal programming file.")
-
-    except subprocess.TimeoutExpired:
-        test_output = 'Timeout'
-        logging.info(f"Test execution for {script_path} exceeded the timeout limit.")
-
+        except subprocess.TimeoutExpired:
+            test_output = 'Timeout'
+    
     except Exception as e:
+        logging.error(f"An error occurred while processing {script_name}: {e}")
         test_output = 'Error'
-        logging.info(f"An error occurred for {script_path}: {e}")
 
     finally:
-        # Ensure tracker stop is always called
-        emissions_data = tracker.stop()  # Stop the emissions tracking
+        try:
+            if tracker_started:
+                emissions_data = tracker.stop()  # Stop the emissions tracking
+        except Exception as e:
+            logging.error(f"Error stopping the tracker for {script_name}: {e}")
 
-    # If emissions data was collected, save it
     if emissions_data is not None:
-        emissions_csv_default_path = 'emissions.csv'  # Default location for emissions.csv
-        emissions_csv_target_path = os.path.join(result_dir, 'emissions.csv')  # Target location
+        emissions_csv_default_path = 'emissions.csv'
+        emissions_csv_target_path = os.path.join(result_dir, 'emissions.csv')
+        try:
+            if os.path.exists(emissions_csv_default_path):
+                shutil.move(emissions_csv_default_path, emissions_csv_target_path)
 
-        # Move the emissions.csv to the result directory
-        if os.path.exists(emissions_csv_default_path):
-            shutil.move(emissions_csv_default_path, emissions_csv_target_path)
-
-        # Read the latest emissions data from the moved CSV
-        if os.stat(emissions_csv_target_path).st_size != 0:
-            emissions_data = pd.read_csv(emissions_csv_target_path).iloc[-1]
-            
-            # Calculate CO2 emissions
-            try:
-                co2_emissions = calculate_co2_emission(emissions_data)
-            except Exception as e:
-                co2_emissions = None
-                logging.error(f"Failed to calculate CO2 emissions for {script_name}: {e}")
-
-            data = [
-                os.path.basename(script_path),
-                file_type,
-                datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                f"{duration:.2f}",  # Duration as string with 2 decimal places
-                f"{emissions_data['emissions_rate'] * 1000:.6f}",  # Emissions rate as string
-                f"{emissions_data['cpu_power']:.6f}",  # CPU Power as string
-                f"{emissions_data['gpu_power']:.6f}",  # GPU Power as string
-                f"{emissions_data['ram_power']:.6f}",  # RAM Power as string
-                f"{emissions_data['cpu_energy'] * 1000:.6f}",  # CPU Energy as string
-                f"{emissions_data['gpu_energy']:.6f}",  # GPU Energy as string
-                f"{emissions_data['ram_energy'] * 1000:.6f}",  # RAM Energy as string
-                f"{emissions_data['energy_consumed'] * 1000:.6f}",  # Energy Consumed as string
-                f"{co2_emissions:.6f}" if co2_emissions is not None else "N/A",  # CO2 Emissions
-                test_output,
-                solution_dir
-            ]
-            
-            with open(emissions_csv, 'a', newline='') as file:
-                writer = csv.writer(file)
-                writer.writerow(data)
-                file.flush()
-        else:
-            logging.info(f"No emissions data found for {script_path}")
+            if os.stat(emissions_csv_target_path).st_size != 0:
+                emissions_data = pd.read_csv(emissions_csv_target_path).iloc[-1]
+                data = [
+                    os.path.basename(script_path),
+                    file_type,
+                    datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                    f"{emissions_data['emissions'] * 1000:.6f}",
+                    f"{duration:.2f}",
+                    f"{emissions_data['emissions_rate'] * 1000:.6f}",
+                    f"{emissions_data['cpu_power']:.6f}",
+                    f"{emissions_data['gpu_power']:.6f}",
+                    f"{emissions_data['ram_power']:.6f}",
+                    f"{emissions_data['cpu_energy'] * 1000:.6f}",
+                    f"{emissions_data['gpu_energy']:.6f}",
+                    f"{emissions_data['ram_energy'] * 1000:.6f}",
+                    f"{emissions_data['energy_consumed'] * 1000:.6f}",
+                    test_output,
+                    solution_dir,
+                    is_green_refined
+                ]
+                with open(emissions_csv, 'a', newline='') as file:
+                    writer = csv.writer(file)
+                    writer.writerow(data)
+                    file.flush()
+            else:
+                logging.error(f"No emissions data found for {script_path}")
+        except Exception as e:
+            logging.error(f"Error processing emissions data for {script_path}: {e}")
     else:
-        logging.info(f"Emissions data collection failed for {script_name}")
+        logging.error(f"Emissions data collection failed for {script_name}")
 
 # Function to process test execution for different file types
 def process_files_by_type(base_dir, emissions_data_csv, result_dir, file_extension, excluded_files, excluded_dirs, tracker, test_command_generator):
@@ -169,12 +114,25 @@ def process_files_by_type(base_dir, emissions_data_csv, result_dir, file_extensi
     for root, dirs, file_list in os.walk(base_dir):
         # Exclude specified directories
         dirs[:] = [d for d in dirs if d not in excluded_dirs]
+
+        # Additional check to ensure we're only processing files in the correct directory
+        if base_dir == SOURCE_DIRECTORY:
+            # For SOURCE_DIRECTORY, exclude files in GREEN_REFINED_DIRECTORY
+            file_list = [f for f in file_list if GREEN_REFINED_DIRECTORY not in root]
+        elif base_dir == GREEN_REFINED_DIRECTORY:
+            # For GREEN_REFINED_DIRECTORY, only process files within this directory
+            file_list = [f for f in file_list if GREEN_REFINED_DIRECTORY in root]
+
         for script in file_list:
             if script.endswith(file_extension) and script not in excluded_files:
-                files.append(os.path.join(root, script))
+                script_path = os.path.join(root, script)
+                # Only add files that have a test command
+                test_command = test_command_generator(script_path)
+                if test_command:
+                    files.append((script_path, test_command))
     
-    for script_path in files:
-        test_command = test_command_generator(script_path) if 'test' in script_path.lower() else None
+    # Process test files
+    for script_path, test_command in files:
         process_emissions_for_file(
             tracker=tracker,
             script_path=script_path,
@@ -246,7 +204,7 @@ def process_folder(base_dir, emissions_data_csv, result_dir, suffix, excluded_di
             writer.writerow([
                 "Application name", "File Type", "Timestamp", "Emissions (gCO2eq)",
                 "Duration", "emissions_rate", "CPU Power (KWh)", "GPU Power (KWh)", "RAM Power (KWh)",
-                "CPU Energy (Wh)", "GPU Energy (KWh)", "RAM Energy (Wh)", "Energy Consumed (Wh)", "Test Results", "solution dir"
+                "CPU Energy (Wh)", "GPU Energy (KWh)", "RAM Energy (Wh)", "Energy Consumed (Wh)", "Test Results", "solution dir", "Is Green Refined"
             ])
         logging.info(f"CSV file '{emissions_data_csv}' created with headers.")
     tracker = EmissionsTracker()
@@ -500,9 +458,16 @@ def generate_html_report(result_dir):
     after_df = pd.read_csv(after_csv)
     comparison_df = pd.read_csv(comparison_csv)
     
-    # Get the latest record as a DataFrame
-    latest_before_df = before_df.loc[[before_df['Timestamp'].idxmax()]]
-    latest_after_df = after_df.loc[[after_df['Timestamp'].idxmax()]]
+    # Check if DataFrames are not empty before getting the latest record
+    if not before_df.empty:
+        latest_before_df = before_df.loc[[before_df['Timestamp'].idxmax()]]
+    else:
+        latest_before_df = pd.DataFrame()  # Create an empty DataFrame
+
+    if not after_df.empty:
+        latest_after_df = after_df.loc[[after_df['Timestamp'].idxmax()]]
+    else:
+        latest_after_df = pd.DataFrame()  # Create an empty DataFrame
 
     # Prepare lists for before and after details to pass to the template
     latest_before_details = [latest_before_df[['Application name', 'File Type', 'Duration', 'Emissions (gCO2eq)', 'Energy Consumed (Wh)', 'solution dir']].to_dict()]
@@ -526,12 +491,6 @@ def generate_html_report(result_dir):
     # Read comparison_results.csv to get total 'Before' and 'After'
     total_emissions_before = comparison_df['Before'].astype(float).sum()
     total_emissions_after = comparison_df['After'].astype(float).sum()
-
-    # Add a check to prevent division by zero
-    if total_emissions_before > 0:
-        energy_improvement = ((total_emissions_before - total_emissions_after) / total_emissions_before * 100)
-    else:
-        energy_improvement = None
 
     # Read comparison_results.csv to get total 'Before' and 'After'
     latest_total_emissions_before = latest_before_df['Emissions (gCO2eq)'].astype(float).sum()
@@ -558,7 +517,6 @@ def generate_html_report(result_dir):
 
     # Determine unique solution dirs
     latest_unique_solution_dirs = sorted(set(latest_before_file_type_sorted['solution dir']).union(latest_after_file_type_sorted['solution dir']))
-
 
     # Assign colors to solution dirs
     color_palette = px.colors.qualitative.Plotly  # Choose a qualitative color palette
@@ -1047,7 +1005,6 @@ def generate_html_report(result_dir):
         div_bar_graph_embedded=div_bar_graph_embedded,
         div_bar_graph_non_embedded=div_bar_graph_non_embedded,
         last_run_timestamp=last_run_timestamp,  # Pass the timestamp
-        energy_improvement=energy_improvement
     )
 
     # Render the details template with detailed data
@@ -1072,7 +1029,6 @@ def generate_html_report(result_dir):
         latest_div_bar_graph_embedded=latest_div_bar_graph_embedded,
         latest_div_bar_graph_non_embedded=latest_div_bar_graph_non_embedded,
         last_run_timestamp=last_run_timestamp,  # Pass the timestamp
-        energy_improvement=energy_improvement
     )
 
         # Render the timestamp-based report template
