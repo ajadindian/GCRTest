@@ -16,6 +16,7 @@ import plotly.express as px
 import plotly.graph_objs as go
 import logging
 import sqlite3
+from datetime import datetime, timedelta
 
 # Load environment variables
 env_path = os.path.abspath(".env")
@@ -379,7 +380,7 @@ def prepare_detailed_data(result_dir):
 
 def generate_html_report(result_dir):
     # Initialize Jinja2 environment
-    env = Environment(loader=FileSystemLoader(TEMP_DIR))
+    env = Environment(loader=FileSystemLoader(SOURCE_DIRECTORY))
     template_path = 'report_template.html'
     last_run_template_path = 'last_run_report_template.html'
     details_template_path = 'details_template.html'
@@ -389,23 +390,23 @@ def generate_html_report(result_dir):
     solution_dirs, detailed_data = prepare_detailed_data(result_dir)
     
     # Check if the templates exist
-    if not os.path.isfile(os.path.join(TEMP_DIR, details_template_path)):
+    if not os.path.isfile(os.path.join(SOURCE_DIRECTORY, details_template_path)):
         logging.error(f"Detailed HTML template file not found: {details_template_path}")
-        logging.error(f"Looking in: {os.path.join(TEMP_DIR, details_template_path)}")
+        logging.error(f"Looking in: {os.path.join(SOURCE_DIRECTORY, details_template_path)}")
         return 
-    if not os.path.isfile(os.path.join(TEMP_DIR, template_path)):
+    if not os.path.isfile(os.path.join(SOURCE_DIRECTORY, template_path)):
         logging.error(f"HTML template file not found: {template_path}")
-        logging.error(f"Looking in: {os.path.join(TEMP_DIR, template_path)}")
+        logging.error(f"Looking in: {os.path.join(SOURCE_DIRECTORY, template_path)}")
         return
     
     # Check if the last run templates exist
-    if not os.path.isfile(os.path.join(TEMP_DIR, last_run_details_template_path)):
+    if not os.path.isfile(os.path.join(SOURCE_DIRECTORY, last_run_details_template_path)):
         logging.error(f"Detailed HTML template file not found: {last_run_details_template_path}")
-        logging.error(f"Looking in: {os.path.join(TEMP_DIR, last_run_details_template_path)}")
+        logging.error(f"Looking in: {os.path.join(SOURCE_DIRECTORY, last_run_details_template_path)}")
         return 
-    if not os.path.isfile(os.path.join(TEMP_DIR, last_run_template_path)):
+    if not os.path.isfile(os.path.join(SOURCE_DIRECTORY, last_run_template_path)):
         logging.error(f"HTML template file not found: {last_run_template_path}")
-        logging.error(f"Looking in: {os.path.join(TEMP_DIR, last_run_template_path)}")
+        logging.error(f"Looking in: {os.path.join(SOURCE_DIRECTORY, last_run_template_path)}")
         return
 
     # Load the templates
@@ -441,6 +442,7 @@ def generate_html_report(result_dir):
     before_csv = os.path.join(result_dir, 'main_before_emissions_data.csv')
     after_csv = os.path.join(result_dir, 'main_after_emissions_data.csv')
     comparison_csv = os.path.join(result_dir, 'comparison_results.csv')
+    server_csv = os.path.join(result_dir, 'server_data.csv')
 
     # Check if CSV files exist
     if not os.path.exists(before_csv):
@@ -457,17 +459,33 @@ def generate_html_report(result_dir):
     before_df = pd.read_csv(before_csv)
     after_df = pd.read_csv(after_csv)
     comparison_df = pd.read_csv(comparison_csv)
-    
-    # Check if DataFrames are not empty before getting the latest record
-    if not before_df.empty:
-        latest_before_df = before_df.loc[[before_df['Timestamp'].idxmax()]]
-    else:
-        latest_before_df = pd.DataFrame()  # Create an empty DataFrame
+    server_df = pd.read_csv(server_csv)
 
-    if not after_df.empty:
-        latest_after_df = after_df.loc[[after_df['Timestamp'].idxmax()]]
-    else:
-        latest_after_df = pd.DataFrame()  # Create an empty DataFrame
+    # Prepare the data for the line chart
+    fig = go.Figure()
+    
+    # Add the energy consumption line
+    fig.add_trace(go.Scatter(x=server_df['Date'], y=server_df['Energy consumption (KWH)'], mode='lines', name='Energy Consumption (KWH)'))
+    
+    # Add the CO2 emission line
+    fig.add_trace(go.Scatter(x=server_df['Date'], y=server_df['CO2 emission (kt)'], mode='lines', name='CO2 Emission (kt)'))
+    
+    # Update the layout
+    fig.update_layout(
+        title='Server Emissions and Energy Consumption',
+        xaxis_title='Date',
+        yaxis_title='Value',
+        xaxis_type='category',
+        width=800,
+        height=400
+    )
+    
+    # Save the chart as a Plotly HTML div
+    div_line_chart = fig.to_html(full_html=False, include_plotlyjs='cdn')
+    
+    # Get the latest record as a DataFrame
+    latest_before_df = before_df.loc[[before_df['Timestamp'].idxmax()]]
+    latest_after_df = after_df.loc[[after_df['Timestamp'].idxmax()]]
 
     # Prepare lists for before and after details to pass to the template
     latest_before_details = [latest_before_df[['Application name', 'File Type', 'Duration', 'Emissions (gCO2eq)', 'Energy Consumed (Wh)', 'solution dir']].to_dict()]
@@ -669,7 +687,7 @@ def generate_html_report(result_dir):
             y=[row['solution dir']],
             orientation='h',
             name=row['solution dir'],
-            marker=dict(color=color_mapping.get(row['solution dir'], 'blue'))
+            marker=dict(color=color_mapping_gco2eq.get(row['solution dir'], 'blue'))  # Use color_mapping_gco2eq
         ))
 
     bar_graph_before_gco2eq.update_layout(
@@ -693,7 +711,7 @@ def generate_html_report(result_dir):
             y=[row['solution dir']],
             orientation='h',
             name=row['solution dir'],
-            marker=dict(color=color_mapping.get(row['solution dir'], 'blue'))
+            marker=dict(color=color_mapping_gco2eq.get(row['solution dir'], 'blue'))
         ))
 
     bar_graph_after_gco2eq.update_layout(
@@ -763,7 +781,6 @@ def generate_html_report(result_dir):
         margin=dict(l=150, r=50, t=50, b=50),
         showlegend=False
     )
-
     # Convert figures to HTML div
     div_bar_graph_before_gco2eq = pio.to_html(bar_graph_before_gco2eq, include_plotlyjs=False, full_html=False)
     div_bar_graph_after_gco2eq = pio.to_html(bar_graph_after_gco2eq, include_plotlyjs=False, full_html=False)
@@ -774,24 +791,24 @@ def generate_html_report(result_dir):
 
     # === Feature 2: Top Five Tables ===
     # Top Five Files Generating Most Energy (Before Refinement)
-    top_five_energy_before = before_df.sort_values('Energy Consumed (Wh)', ascending=False).head(5)[['Application name', 'Energy Consumed (Wh)']]
-    top_five_energy_before.rename(columns={'Application name': 'File Name', 'Energy Consumed (Wh)': 'Energy Consumed (Wh)'}, inplace=True)
+    top_five_energy_before = before_df.sort_values('Energy Consumed (Wh)', ascending=False).head(5)[['Application name', 'Timestamp', 'Energy Consumed (Wh)']]
+    top_five_energy_before.rename(columns={'Application name': 'File Name', 'Timestamp': 'Timestamp', 'Energy Consumed (Wh)': 'Energy Consumed (Wh)'}, inplace=True)
     energy_table_html = top_five_energy_before.to_html(index=False, classes='table', border=0, float_format=lambda x: f"{x:.6f}")
 
     # Top Five Files Generating Most Emissions (Before Refinement)
-    top_five_emissions_before = before_df.sort_values('Emissions (gCO2eq)', ascending=False).head(5)[['Application name', 'Emissions (gCO2eq)']]
-    top_five_emissions_before.rename(columns={'Application name': 'File Name', 'Emissions (gCO2eq)': 'Emissions (gCO2eq)'}, inplace=True)
+    top_five_emissions_before = before_df.sort_values('Emissions (gCO2eq)', ascending=False).head(5)[['Application name', 'Timestamp', 'Emissions (gCO2eq)']]
+    top_five_emissions_before.rename(columns={'Application name': 'File Name', 'Timestamp': 'Timestamp', 'Emissions (gCO2eq)': 'Emissions (gCO2eq)'}, inplace=True)
     emissions_table_html = top_five_emissions_before.to_html(index=False, classes='table', border=0, float_format=lambda x: f"{x:.6f}")
 
 # --------------------------------------------------------------------------------------------
 
-    latest_top_five_energy_before = latest_before_df.sort_values('Energy Consumed (Wh)', ascending=False).head(5)[['Application name', 'Energy Consumed (Wh)']]
-    latest_top_five_energy_before.rename(columns={'Application name': 'File Name', 'Energy Consumed (Wh)': 'Energy Consumed (Wh)'}, inplace=True)
+    latest_top_five_energy_before = latest_before_df.sort_values('Energy Consumed (Wh)', ascending=False).head(5)[['Application name', 'Timestamp', 'Energy Consumed (Wh)']]
+    latest_top_five_energy_before.rename(columns={'Application name': 'File Name', 'Timestamp': 'Timestamp', 'Energy Consumed (Wh)': 'Energy Consumed (Wh)'}, inplace=True)
     latest_energy_table_html = latest_top_five_energy_before.to_html(index=False, classes='table', border=0, float_format=lambda x: f"{x:.6f}")
 
     # Top Five Files Generating Most Emissions (Before Refinement)
-    latest_top_five_emissions_before = latest_before_df.sort_values('Emissions (gCO2eq)', ascending=False).head(5)[['Application name', 'Emissions (gCO2eq)']]
-    latest_top_five_emissions_before.rename(columns={'Application name': 'File Name', 'Emissions (gCO2eq)': 'Emissions (gCO2eq)'}, inplace=True)
+    latest_top_five_emissions_before = latest_before_df.sort_values('Emissions (gCO2eq)', ascending=False).head(5)[['Application name', 'Timestamp', 'Emissions (gCO2eq)']]
+    latest_top_five_emissions_before.rename(columns={'Application name': 'File Name', 'Timestamp': 'Timestamp', 'Emissions (gCO2eq)': 'Emissions (gCO2eq)'}, inplace=True)
     latest_emissions_table_html = latest_top_five_emissions_before.to_html(index=False, classes='table', border=0, float_format=lambda x: f"{x:.6f}")
 
     # === Feature 3: Emissions for Embedded and Non-Embedded Code ===
@@ -989,7 +1006,6 @@ def generate_html_report(result_dir):
         latest_div_bar_graph_non_embedded = pio.to_html(latest_bar_graph_non_embedded, include_plotlyjs=False, full_html=False)
 # --------------------------------------------------------------------------------------------
 
-
     # Render the template with dynamic data
     html_content = template.render(
         total_before=f"{total_before:.6f}",
@@ -1005,6 +1021,7 @@ def generate_html_report(result_dir):
         div_bar_graph_embedded=div_bar_graph_embedded,
         div_bar_graph_non_embedded=div_bar_graph_non_embedded,
         last_run_timestamp=last_run_timestamp,  # Pass the timestamp
+        div_line_chart=div_line_chart
     )
 
     # Render the details template with detailed data
