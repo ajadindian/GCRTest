@@ -281,36 +281,30 @@
                 transform: translateY(0);
             }
         }
-        .energy-table {
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        table {
             width: 100%;
             border-collapse: collapse;
-            margin: 20px 0;
-            font-size: 1rem;
             font-family: Arial, sans-serif;
+            font-size: 14px;
         }
-
-        .energy-table th, .energy-table td {
-            border: 1px solid #ddd;
-            padding: 10px;
+        
+        th, td {
+            padding: 12px 16px;
             text-align: left;
+            border-bottom: 1px solid #e0e0e0;
         }
-
-        .energy-table th {
-            background-color: #004d40;
-            color: white;
+        
+        th {
+            background-color: #f2f2f2;
             font-weight: bold;
         }
-
-        .energy-table tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
-
-        .energy-table tr:hover {
-            background-color: #e0f7fa;
-        }
-
-        .table-wrapper {
-            overflow-x: auto; /* Ensures the table is scrollable on small screens */
+        
+        tr:hover {
+            background-color: #f5f5f5;
         }
     </style>
 </head>
