@@ -282,36 +282,51 @@
                 font-size: 2rem;
             }
         }
-        .energy-table {
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        table {
             width: 100%;
             border-collapse: collapse;
-            margin: 20px 0;
-            font-size: 1rem;
             font-family: Arial, sans-serif;
+            font-size: 14px;
         }
-
-        .energy-table th, .energy-table td {
-            border: 1px solid #ddd;
-            padding: 10px;
+        
+        th, td {
+            padding: 12px 16px;
             text-align: left;
+            border-bottom: 1px solid #e0e0e0;
         }
-
-        .energy-table th {
-            background-color: #004d40;
-            color: white;
+        
+        th {
+            background-color: #f2f2f2;
             font-weight: bold;
         }
-
-        .energy-table tr:nth-child(even) {
-            background-color: #f2f2f2;
+        
+        tr:hover {
+            background-color: #f5f5f5;
         }
-
-        .energy-table tr:hover {
-            background-color: #e0f7fa;
+        .chart-wrapper {
+            background: var(--card-bg);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+            animation: slideUp 0.5s ease-out;
         }
-
-        .table-wrapper {
-            overflow-x: auto; /* Ensures the table is scrollable on small screens */
+        .chart-wrapper h3 {
+            color: var(--text);
+            margin-bottom: 1.5rem;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .chart-container {
+            width: 100%;
+            height: 400px;
+            position: relative;
         }
     </style>
 </head>
@@ -375,9 +390,9 @@
 
         <div class="table-wrapper">
             <h3>Most Energy Consumption (Wh)</h3>
-            <table class="energy-table">
+            <div class="table-container">
                 {{ energy_table_html | safe }}
-            </table>
+            </div>
         </div>
     </section>
 
@@ -443,6 +458,16 @@
             <table class="energy-table">
                 {{ emissions_table_html | safe }}
             </table>
+        </div>
+    </section>
+
+    <!-- Server Analysis Section -->
+    <section class="section">
+        <div class="chart-wrapper">
+            <h3><i class="fas fa-server"></i> Server Emissions and Energy Consumption</h3>
+            <div class="chart-container">
+                {{ div_line_chart | safe }}
+            </div>
         </div>
     </section>
 
